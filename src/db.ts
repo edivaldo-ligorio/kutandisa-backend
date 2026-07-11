@@ -79,5 +79,14 @@ export function initSchema() {
       destination_id INTEGER NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
       PRIMARY KEY (user_id, destination_id)
     );
+
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT NOT NULL,
+      email      TEXT NOT NULL,
+      subject    TEXT NOT NULL,
+      message    TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }

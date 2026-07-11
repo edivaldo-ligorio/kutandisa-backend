@@ -29,6 +29,11 @@ bookingsRouter.get('/', requireAuth, (req, res) => {
     query += ' AND b.client_id = ?';
     params.push(id);
   }
+  if (role === 'operator') {
+    const op = db.prepare('SELECT id FROM operators WHERE user_id = ?').get(id) as { id: number } | undefined;
+    query += ' AND b.operator_id = ?';
+    params.push(op?.id ?? -1);
+  }
   if (status) {
     query += ' AND b.status = ?';
     params.push(status);
@@ -77,8 +82,15 @@ bookingsRouter.patch('/:id/status', requireAuth, requireRole('operator', 'admin'
     return res.status(400).json({ error: 'Estado inválido' });
   }
 
-  const existing = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
+  const existing = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id) as { operator_id: number | null } | undefined;
   if (!existing) return res.status(404).json({ error: 'Reserva não encontrada' });
+
+  if (req.auth!.role === 'operator') {
+    const op = db.prepare('SELECT id FROM operators WHERE user_id = ?').get(req.auth!.id) as { id: number } | undefined;
+    if (!op || existing.operator_id !== op.id) {
+      return res.status(403).json({ error: 'Não podes alterar reservas de outro operador' });
+    }
+  }
 
   db.prepare('UPDATE bookings SET status = ? WHERE id = ?').run(parsed.data.status, req.params.id);
   const booking = db.prepare(bookingSelect + ' WHERE b.id = ?').get(req.params.id);

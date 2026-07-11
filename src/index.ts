@@ -8,6 +8,8 @@ import { bookingsRouter } from './routes/bookings.js';
 import { usersRouter } from './routes/users.js';
 import { operatorsRouter } from './routes/operators.js';
 import { paymentsRouter } from './routes/payments.js';
+import { favouritesRouter } from './routes/favourites.js';
+import { contactRouter } from './routes/contact.js';
 
 initSchema();
 
@@ -28,6 +30,8 @@ app.use('/api/bookings', bookingsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/operators', operatorsRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/favourites', favouritesRouter);
+app.use('/api/contact', contactRouter);
 
 // 404
 app.use('/api', (_req, res) => {
