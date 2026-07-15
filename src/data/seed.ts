@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { db, initSchema, KZ_PER_POINT_EARNED } from '../db.js';
+import { db, initSchema } from '../db.js';
 
 const destinations = [
   {
@@ -157,55 +157,7 @@ function seed() {
     destIds.push(Number(info.lastInsertRowid));
   }
 
-  const insertBooking = db.prepare(`
-    INSERT INTO bookings (client_id, destination_id, operator_id, date, status, amount, people, points_earned, points_settled)
-    VALUES (@client_id, @destination_id, @operator_id, @date, @status, @amount, @people, @points_earned, @points_settled)
-  `);
-  const bookingSeed = [
-    { destination_id: destIds[5], date: '2026-03-15', status: 'confirmed', amount: 90000, people: 2 },
-    { destination_id: destIds[2], date: '2026-04-05', status: 'confirmed', amount: 75000, people: 1 },
-    { destination_id: destIds[5], date: '2026-02-20', status: 'cancelled', amount: 60000, people: 3 },
-  ];
-  const bookingIds: number[] = [];
-  let totalPointsEarned = 0;
-  for (const b of bookingSeed) {
-    const pointsEarned = b.status === 'confirmed' ? Math.floor(b.amount / KZ_PER_POINT_EARNED) : 0;
-    totalPointsEarned += pointsEarned;
-    const info = insertBooking.run({
-      client_id: userIds.client,
-      destination_id: b.destination_id,
-      operator_id: userIds.operator ? 1 : null,
-      date: b.date,
-      status: b.status,
-      amount: b.amount,
-      people: b.people,
-      points_earned: pointsEarned,
-      points_settled: b.status === 'confirmed' ? 1 : 0,
-    });
-    bookingIds.push(Number(info.lastInsertRowid));
-  }
-  if (totalPointsEarned > 0) {
-    db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(totalPointsEarned, userIds.client);
-  }
-
-  const insertPayment = db.prepare(`
-    INSERT INTO payments (booking_id, amount, method, status, date)
-    VALUES (@booking_id, @amount, @method, @status, @date)
-  `);
-  const paymentStatusFor: Record<string, string> = { confirmed: 'completed', pending: 'pending', cancelled: 'failed' };
-  const paymentMethods = ['Multicaixa Express', 'Transferência'];
-  bookingSeed.forEach((b, i) => {
-    insertPayment.run({
-      booking_id: bookingIds[i],
-      amount: b.amount,
-      method: b.status === 'cancelled' ? 'A definir' : paymentMethods[i % paymentMethods.length],
-      status: paymentStatusFor[b.status],
-      date: b.date,
-    });
-  });
-
-  console.log(`Seed concluído: 3 utilizadores, 9 destinos, ${bookingSeed.length} reservas, ${bookingSeed.length} pagamentos.`);
-  console.log(`Pontos Kutandisa creditados à Maria (reservas confirmadas): ${totalPointsEarned}`);
+  console.log('Seed concluído: 3 utilizadores, 9 destinos. Sem reservas nem pagamentos fictícios.');
   console.log('Credenciais demo:');
   console.log('  Cliente  -> maria@kutandisa.ao / 123456');
   console.log('  Operador -> hotel@kutandisa.ao / hotel123');
