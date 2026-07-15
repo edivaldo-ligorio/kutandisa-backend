@@ -84,6 +84,12 @@ bookingsRouter.post('/', requireAuth, requireRole('client'), (req, res) => {
     if (pointsToRedeem > 0) {
       db.prepare('UPDATE users SET points = points - ? WHERE id = ?').run(pointsToRedeem, req.auth!.id);
     }
+
+    // Cada reserva gera automaticamente um registo de pagamento, que acompanha o seu estado
+    db.prepare(
+      "INSERT INTO payments (booking_id, amount, method, status, date) VALUES (?, ?, 'A definir', 'pending', date('now'))"
+    ).run(info.lastInsertRowid, finalAmount);
+
     return info.lastInsertRowid;
   });
 
@@ -129,6 +135,7 @@ bookingsRouter.patch('/:id/status', requireAuth, requireRole('operator', 'admin'
       if (earned > 0) {
         db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(earned, existing.client_id);
       }
+      db.prepare("UPDATE payments SET status = 'completed', date = date('now') WHERE booking_id = ?").run(req.params.id);
       return;
     }
 
@@ -144,10 +151,12 @@ bookingsRouter.patch('/:id/status', requireAuth, requireRole('operator', 'admin'
         newStatus,
         req.params.id
       );
+      db.prepare("UPDATE payments SET status = 'failed' WHERE booking_id = ?").run(req.params.id);
       return;
     }
 
     db.prepare('UPDATE bookings SET status = ? WHERE id = ?').run(newStatus, req.params.id);
+    db.prepare("UPDATE payments SET status = 'pending' WHERE booking_id = ?").run(req.params.id);
   });
 
   applyStatusChange();

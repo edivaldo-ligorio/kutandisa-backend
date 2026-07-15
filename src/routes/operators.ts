@@ -5,6 +5,12 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 export const operatorsRouter = Router();
 
+// GET /operators/active — lista reduzida (id, nome, categoria) para o cliente escolher ao reservar
+operatorsRouter.get('/active', requireAuth, (req, res) => {
+  const data = db.prepare("SELECT id, name, category FROM operators WHERE status = 'active' ORDER BY name").all();
+  res.json({ data });
+});
+
 operatorsRouter.get('/', requireAuth, requireRole('admin'), (req, res) => {
   const data = db.prepare('SELECT * FROM operators').all();
   res.json({ data, total: data.length });
