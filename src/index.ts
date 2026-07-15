@@ -10,6 +10,7 @@ import { operatorsRouter } from './routes/operators.js';
 import { paymentsRouter } from './routes/payments.js';
 import { favouritesRouter } from './routes/favourites.js';
 import { contactRouter } from './routes/contact.js';
+import { loyaltyRouter } from './routes/loyalty.js';
 
 initSchema();
 
@@ -32,6 +33,7 @@ app.use('/api/operators', operatorsRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/favourites', favouritesRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/loyalty', loyaltyRouter);
 
 // 404
 app.use('/api', (_req, res) => {

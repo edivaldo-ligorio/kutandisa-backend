@@ -89,4 +89,22 @@ export function initSchema() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migração segura: adiciona colunas de pontos sem apagar bases de dados já existentes
+  ensureColumn('users', 'points', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('bookings', 'points_redeemed', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('bookings', 'points_earned', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('bookings', 'points_settled', 'INTEGER NOT NULL DEFAULT 0');
 }
+
+/** Adiciona uma coluna a uma tabela existente, apenas se ela ainda não existir. */
+function ensureColumn(table: string, column: string, definition: string) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+// Regras do programa de pontos Kutandisa
+export const KZ_PER_POINT_EARNED = 10000;  // Kz gastos numa reserva confirmada para ganhar 1 ponto
+export const KZ_PER_POINT_REDEEMED = 1000; // valor de desconto por cada ponto resgatado
